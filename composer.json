@@ -1,0 +1,14 @@
+{
+    "name": "evoluted/pricemodifier",
+    "description": "Generic price modifer package",
+    "authors": [
+        {
+            "name": "Rick Mills",
+            "email": "rick@evoluted.net"
+        }
+    ],
+    "require": {},
+	"autoload": {
+		"psr-4": { "Evoluted\\PriceModifier\\": ["src/"] }
+    }
+}
