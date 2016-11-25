@@ -1,6 +1,7 @@
 {
     "name": "evoluted/pricemodifier",
     "description": "Generic price modifer package",
+    "license": "MIT",
     "authors": [
         {
             "name": "Rick Mills",
