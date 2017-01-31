@@ -10,6 +10,7 @@ use Evoluted\PriceModifier\Interfaces\BasketItemInterface;
  *
  * @package 	PriceModifier
  * @author 		Rick Mills <rick@evoluted.net>
+ * @author 		Sam Biggins <sam@evoluted.net>
  * @author		Evoluted New Media <developers@evoluted.net>
  * @license     http://mit-license.org/
  *
@@ -69,9 +70,43 @@ class BasketItem implements BasketItemInterface
 	 * Calculates and returns the item total from the unit price and quantity
 	 * @return double new total price
 	 */
+	public function subtotal()
+	{
+		if (isset($this->subtotal)) {
+			return $this->subtotal;
+		}
+		return $this->unitPrice * $this->quantity;
+	}
+
+	public function taxRate() {
+		if (isset($this->data['taxRate'])) {
+			return $this->data['taxRate'];
+		}
+		return 0;
+	}
+
+	/**
+	 * Calculates and returns the item total from the unit price and quantity
+	 * @return double new total price
+	 */
+	public function tax()
+	{
+		if (isset($this->tax)) {
+			return $this->tax;
+		}
+		return number_format($this->subtotal() * $this->taxRate() / 100, 2, '.', ',');
+	}
+
+	/**
+	 * Calculates and returns the item total from the unit price and quantity
+	 * @return double new total price
+	 */
 	public function total()
 	{
-		return $this->unitPrice * $this->quantity;
+		if (isset($this->total)) {
+			return $this->total;
+		}
+		return $this->subtotal() + $this->tax();
 	}
 
 	/**
