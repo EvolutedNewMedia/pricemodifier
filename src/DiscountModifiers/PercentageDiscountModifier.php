@@ -41,8 +41,15 @@ class PercentageDiscountModifier extends BaseDiscountModifier implements Discoun
 					// $discountSubtotal and $discountTax
 					extract($this->_normaliseDiscount($discountSubtotal, $discountTax));
 
-					$this->basket->discountBreakdown[$this->id]['amount'] = $discountSubtotal;
-					$this->basket->discountBreakdown[$this->id]['tax'] = $discountTax;
+					if (!isset($this->basket->discountBreakdown[$this->id]['amount'])) {
+						$this->basket->discountBreakdown[$this->id]['amount'] = 0;
+					}
+					if (!isset($this->basket->discountBreakdown[$this->id]['tax'])) {
+						$this->basket->discountBreakdown[$this->id]['tax'] = 0;
+					}
+
+					$this->basket->discountBreakdown[$this->id]['amount'] += $discountSubtotal;
+					$this->basket->discountBreakdown[$this->id]['tax'] += $discountTax;
 
 					$this->basket->discount += $discountSubtotal;
 					$this->basket->discountTax += $discountTax;
@@ -63,8 +70,15 @@ class PercentageDiscountModifier extends BaseDiscountModifier implements Discoun
 			// $discountSubtotal and $discountTax
 			extract($this->_normaliseDiscount($discountSubtotal, $discountTax));
 
-			$this->basket->discountBreakdown[$this->id]['amount'] = $discountSubtotal;
-			$this->basket->discountBreakdown[$this->id]['tax'] = $discountTax;
+			if (!isset($this->basket->discountBreakdown[$this->id]['amount'])) {
+				$this->basket->discountBreakdown[$this->id]['amount'] = 0;
+			}
+			if (!isset($this->basket->discountBreakdown[$this->id]['tax'])) {
+				$this->basket->discountBreakdown[$this->id]['tax'] = 0;
+			}
+
+			$this->basket->discountBreakdown[$this->id]['amount'] += $discountSubtotal;
+			$this->basket->discountBreakdown[$this->id]['tax'] += $discountTax;
 
 			$this->basket->discount += $discountSubtotal;
 			$this->basket->discountTax += $discountTax;
