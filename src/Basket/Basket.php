@@ -238,7 +238,8 @@ class Basket implements BasketInterface
 	 * @return bool true if discount can be applied
 	 */
 	public function validDiscount($discountId, $basketItem) {
-		if (empty($this->validDiscounts[$discountId]) || in_array($basketItem->reference, $this->validDiscounts[$discountId])) {
+		if (!isset($this->validDiscounts[$discountId]) || in_array($basketItem->id, $this->validDiscounts[$discountId])) {
+
 			return true;
 		}
 		return false;

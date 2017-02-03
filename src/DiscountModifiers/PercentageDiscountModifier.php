@@ -27,7 +27,6 @@ class PercentageDiscountModifier extends BaseDiscountModifier implements Discoun
 	{
 		if ($this->params['applyToItems']) {
 			foreach ($this->basket->items() as $basketItem) {
-
 				if ($this->basket->validDiscount($this->id, $basketItem)) {
 					if ($this->params['applyDiscountsAfterTax'] == true) {
 						$discountSubtotal = $this->__getDiscount($basketItem->subtotal());
@@ -54,7 +53,6 @@ class PercentageDiscountModifier extends BaseDiscountModifier implements Discoun
 					$this->basket->discount += $discountSubtotal;
 					$this->basket->discountTax += $discountTax;
 				}
-
 			}
 		} else {
 			if ($this->params['applyDiscountsAfterTax'] = true) {
