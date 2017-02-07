@@ -2,53 +2,22 @@
 namespace Evoluted\PriceModifier\DiscountModifiers;
 
 use Evoluted\PriceModifier\Interfaces\DiscountModifierInterface;
-use Evoluted\PriceModifier\Interfaces\BasketInterface;
+use Evoluted\PriceModifier\DiscountModifiers\BaseDiscountModifier;
 
 /**
  * A fixed discount handler for the PriceModifer package.
  *
  * @package 	PriceModifier
  * @author 		Rick Mills <rick@evoluted.net>
+ * @author 		Sam Biggins <sam@evoluted.net>
  * @author		Evoluted New Media <developers@evoluted.net>
  * @license     http://mit-license.org/
  *
  * @link		https://github.com/evolutednewmedia/pricemodifier
  *
  */
-class FixedDiscountModifier implements DiscountModifierInterface
+class FixedDiscountModifier extends BaseDiscountModifier implements DiscountModifierInterface
 {
-	/**
-     * @var Evoluted\PriceModifier\Interfaces\BasketInterface
-     */
-	protected $basket;
-
-	/**
-	 * @var Mixed A unique identifier for the discount. This can be a string or a number.
-	 */
-	protected $id;
-
-	/**
-	 * @var Array This contains any settings/data needed for this handler.
-	 */
-	protected $params = [
-		'amount' => 0,
-		'applyToItems' => false // set to true to individually apply the discount to items instead of the basket total
-	];
-
-	/**
-	 * Construct the discount handler
-	 *
-	 * @param mixed $id A unique identifier for this discount
-	 * @param array $discountData Any data needed for the discount
-	 * @param BasketInterface $basket The current basket to modify
-	 */
-	public function __construct($id, $discountData, BasketInterface $basket)
-	{
-		$this->id = $id;
-		$this->params = array_merge($this->params, $discountData);
-		$this->basket = $basket;
-	}
-
 	/**
 	 * Applies the discount to the loaded basket.
 	 *
@@ -58,18 +27,79 @@ class FixedDiscountModifier implements DiscountModifierInterface
 	{
 		if ($this->params['applyToItems']) {
 			foreach ($this->basket->items() as $basketItem) {
-
-				if (empty($this->basket->validDiscounts[$this->id]) || in_array($basketItem->reference, $this->basket->validDiscounts[$this->id])) {
-					$discount = $this->params['amount'];
-					$this->basket->discount += $discount;
+				if ($this->basket->validDiscount($this->id, $basketItem)) {
+					$this->_applyDiscount($basketItem->taxRate());
 				}
 
 			}
 		} else {
-			$this->basket->discount += $this->params['amount'];
+			// Even if we are applying to the whole basket we only want to apply the fixed
+			// discount up to the cost of the basket items valid for this discount
+			$tax = $subtotal = 0;
+			foreach ($this->basket->items() as $basketItem) {
+				if ($this->basket->validDiscount($this->id, $basketItem)) {
+					$tax += $basketItem->tax();
+					$subtotal += $basketItem->subtotal();
+				}
+			}
+
+			// If the discount amount is more than the items
+			if ($this->params['amount'] > ($tax + $subtotal)) {
+				$this->params['amount'] = ($tax + $subtotal);
+			}
+
+			// Calculate the tax rate across the valid items
+			$taxRate = $tax / $subtotal;
+
+			$this->_applyDiscount($taxRate);
 		}
 
 		return $this->basket;
+	}
+
+	/**
+	 * Applies a discount to either basket item or entire basket
+	 * @param  double $taxRate The tax rate of the basket item or average of the basket
+	 */
+	protected function _applyDiscount($taxRate = null)
+	{
+		if ($this->params['applyDiscountsAfterTax'] == true) {
+			extract($this->__getDiscount($taxRate));
+		} else {
+			extract($this->__getDiscount(0));
+		}
+
+		// Normalise the discount to remove half penies, extracts back out into
+		// $discountSubtotal and $discountTax
+		extract($this->_normaliseDiscount($discountSubtotal, $discountTax));
+
+		if (!isset($this->basket->discountBreakdown[$this->id]['amount'])) {
+			$this->basket->discountBreakdown[$this->id]['amount'] = 0;
+		}
+		if (!isset($this->basket->discountBreakdown[$this->id]['tax'])) {
+			$this->basket->discountBreakdown[$this->id]['tax'] = 0;
+		}
+
+		$this->basket->discountBreakdown[$this->id]['amount'] += $discountSubtotal;
+		$this->basket->discountBreakdown[$this->id]['tax'] += $discountTax;
+
+		$this->basket->discount += $discountSubtotal;
+		$this->basket->discountTax += $discountTax;
+	}
+
+	/**
+	 * Calculates the discount based on a given tax rate
+	 * @param  double $taxRate Tax rate used to split fixed discount across subtotal and tax
+	 * @return array  An array of the discount off the subtotal and tax
+	 */
+	private function __getDiscount($taxRate)
+	{
+		$discountTax = number_format($this->params['amount'] - ($this->params['amount'] / (1 + ($taxRate / 100))), 2);
+
+		return [
+			'discountSubtotal' => $this->params['amount'] - $discountTax,
+			'discountTax' => $discountTax
+		];
 	}
 
 }

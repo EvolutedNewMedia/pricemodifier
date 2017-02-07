@@ -6,6 +6,7 @@ namespace Evoluted\PriceModifier\Interfaces;
  *
  * @package 	PriceModifier
  * @author 		Rick Mills <rick@evoluted.net>
+ * @author 		Sam Biggins <sam@evoluted.net>
  * @author		Evoluted New Media <developers@evoluted.net>
  * @license     http://mit-license.org/
  *
@@ -90,6 +91,13 @@ interface BasketInterface {
 	 * @return array Returns an array of all item objects in the basket
 	 */
 	public function items();
+
+	/**
+	 * Returns whether a discount can be used again a particular basket item
+	 *
+	 * @return bool true if discount can be applied
+	 */
+	public function validDiscount($discountId, $basketItem);
 
 	/**
 	 * Formats the basket out as an array

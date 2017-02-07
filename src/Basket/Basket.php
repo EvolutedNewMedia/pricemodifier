@@ -12,6 +12,7 @@ use Evoluted\PriceModifier\Basket\BasketItem;
  *
  * @package 	PriceModifier
  * @author 		Rick Mills <rick@evoluted.net>
+ * @author 		Sam Biggins <sam@evoluted.net>
  * @author		Evoluted New Media <developers@evoluted.net>
  * @license     http://mit-license.org/
  *
@@ -31,9 +32,24 @@ class Basket implements BasketInterface
 	protected $basketId;
 
 	/**
+	 * @var  Stores the discount rules to be applied to the basket
+	 */
+	public $discountRules = [];
+
+	/**
 	 * @var double The total discount applied to the basket
 	 */
 	public $discount = 0;
+
+	/**
+	 * @var double The total tax discount applied to the basket
+	 */
+	public $discountTax = 0;
+
+	/**
+	 * @var array A breakdown of the amount of discount from each discount
+	 */
+	public $discountBreakdown = [];
 
 	/**
 	 * Construct the basket
@@ -43,7 +59,6 @@ class Basket implements BasketInterface
 	 */
 	public function __construct(StorageInterface $storage, $basketId)
 	{
-
 		$this->basketId = $basketId;
 		$this->setStorage($storage);
 		$this->storage->setId($basketId);
@@ -152,6 +167,21 @@ class Basket implements BasketInterface
 	}
 
 	/**
+	 * Returns the basket tax
+	 *
+	 * @return double Basket total
+	 */
+	public function getBasketTax()
+	{
+		$tax = 0;
+		foreach($this->items() as $item) {
+			$tax += $item->tax();
+		}
+
+		return $tax;
+	}
+
+	/**
 	 * Returns the basket total
 	 *
 	 * @return double Basket total
@@ -160,10 +190,36 @@ class Basket implements BasketInterface
 	{
 		$total = 0;
 		foreach($this->items() as $item) {
-			$total += $item->total;
+			$total += $item->total();
 		}
 
 		return $total;
+	}
+
+	/**
+	 * Returns the basket subtotal
+	 *
+	 * @return double Basket subtotal
+	 */
+	public function getBasketSubtotal()
+	{
+		$subtotal = 0;
+		foreach($this->items() as $item) {
+			$subtotal += $item->subtotal();
+		}
+
+		return $subtotal;
+	}
+
+	/**
+	 * Returns the average tax rate of the basket
+	 * This can be useful when splitting a fixed price discount across tax and subtotal
+	 *
+	 * @return double Basket tax rate
+	 */
+	public function getBasketTaxRate()
+	{
+		return number_format($this->getBasketTax() / $this->getBasketSubtotal() * 100, 2);
 	}
 
 	/**
@@ -174,6 +230,19 @@ class Basket implements BasketInterface
 	public function items()
 	{
 		return $this->getStorage()->data();
+	}
+
+	/**
+	 * Returns whether a discount can be used again a particular basket item
+	 *
+	 * @return bool true if discount can be applied
+	 */
+	public function validDiscount($discountId, $basketItem) {
+		if (!isset($this->validDiscounts[$discountId]) || in_array($basketItem->id, $this->validDiscounts[$discountId])) {
+
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -188,7 +257,9 @@ class Basket implements BasketInterface
 			'items' => $this->getStorage()->data(true),
 			'subtotal' => $this->getBasketTotal(),
 			'discount' => $this->discount,
-			'discountedTotal' => $this->getBasketTotal() - $this->discount
+			'discountTax' => $this->discountTax,
+			'discountBreakdown' => $this->discountBreakdown,
+			'discountedTotal' => $this->getBasketTotal() - $this->discount - $this->discountTax
 		];
 	}
 
