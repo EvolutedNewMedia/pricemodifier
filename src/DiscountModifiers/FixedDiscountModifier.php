@@ -30,7 +30,6 @@ class FixedDiscountModifier extends BaseDiscountModifier implements DiscountModi
 				if ($this->basket->validDiscount($this->id, $basketItem)) {
 					$this->_applyDiscount($basketItem->taxRate());
 				}
-
 			}
 		} else {
 			// Even if we are applying to the whole basket we only want to apply the fixed
@@ -48,10 +47,13 @@ class FixedDiscountModifier extends BaseDiscountModifier implements DiscountModi
 				$this->params['amount'] = ($tax + $subtotal);
 			}
 
+			// If there are any valid items to discount
 			// Calculate the tax rate across the valid items
-			$taxRate = $tax / $subtotal;
+			if ($subtotal > 0) {
+				$taxRate = $tax / $subtotal;
+				$this->_applyDiscount($taxRate);
+			}
 
-			$this->_applyDiscount($taxRate);
 		}
 
 		return $this->basket;
