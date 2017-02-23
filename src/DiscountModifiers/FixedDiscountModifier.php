@@ -51,6 +51,7 @@ class FixedDiscountModifier extends BaseDiscountModifier implements DiscountModi
 			// Calculate the tax rate across the valid items
 			if ($subtotal > 0) {
 				$taxRate = $tax / $subtotal;
+				$taxRate *= 100;
 				$this->_applyDiscount($taxRate);
 			}
 
