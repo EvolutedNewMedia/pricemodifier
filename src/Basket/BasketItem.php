@@ -94,6 +94,11 @@ class BasketItem implements BasketItemInterface
 		if (isset($this->tax)) {
 			return $this->tax;
 		}
+
+		if (isset($this->data['unitTax'])) {
+			return $this->unitTax * $this->quantity;
+		}
+
 		return round($this->subtotal() * $this->taxRate() / 100, 2);
 	}
 
